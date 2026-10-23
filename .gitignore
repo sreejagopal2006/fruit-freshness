@@ -1,0 +1,50 @@
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# System and IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Heavy dataset files (Keep Git repository lightweight for Streamlit Cloud deployment)
+data/raw/
+*.zip
+*.tar.gz
+
+# Explicitly track essential trained model artifacts and evaluation reports
+!models/
+!models/README.md
+!models/hybrid_svm_model.joblib
+!models/hybrid_scaler.joblib
+!models/label_encoder.joblib
+!models/mobilenet_extractor.keras
+!reports/
+!reports/README.md
+!reports/hybrid_svm_report.json
+!reports/model_comparison.json
+!reports/cm_hybrid_mobilenetv2_plus_svm.png
+!reports/confusion_matrix.png
+
+# Local backup files - do not upload
+app_before_*.py
+app.py.*.bak
+*.backup
+
+# Optional models not required for the default Hybrid prediction
+models/cnn_model.keras
+models/mobilenet_model.keras
+models/mobilenet_extractor_before_training.keras
