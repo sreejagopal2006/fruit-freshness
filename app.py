@@ -380,15 +380,20 @@ def load_evaluation_reports() -> Dict[str, Any]:
 
 
 def find_fruitvision_samples(category: str, label: str, data_dir: Optional[Path] = None) -> Dict[str, Any]:
-    """Dynamically scan data/raw directory recursively for authentic samples matching category and label."""
-    base_dir = Path(data_dir) if data_dir else config.RAW_DATA_DIR
-    if not base_dir.exists():
-        return {"found": False, "images": [], "folder": None, "total": 0}
+    """Find authentic samples in the bundled gallery and, when available, data/raw."""
+    if data_dir is not None:
+        search_roots = [Path(data_dir)]
+    else:
+        search_roots = [
+            config.BASE_DIR / "assets" / "fruitvision_samples",
+            config.RAW_DATA_DIR,
+        ]
 
     cat_term = category.lower().strip()
     lbl_term = label.lower().strip()
 
     cat_tokens = ["grape", "grapes"] if "grape" in cat_term else [cat_term]
+
     if "formalin" in lbl_term:
         lbl_tokens = ["formalin", "formalin-mixed", "formalin_mixed"]
     elif "rotten" in lbl_term:
@@ -400,26 +405,38 @@ def find_fruitvision_samples(category: str, label: str, data_dir: Optional[Path]
     else:
         lbl_tokens = [lbl_term]
 
+    valid_exts = tuple(config.SUPPORTED_EXTENSIONS)
     matching = []
     matched_folder = None
-    valid_exts = tuple(config.SUPPORTED_EXTENSIONS)
 
-    for root, dirs, files in os.walk(base_dir):
-        p = Path(root)
-        name = p.name.lower()
-        parent = p.parent.name.lower()
-        if any(t in name or t in parent for t in cat_tokens) and any(t in name or t in parent for t in lbl_tokens):
-            img_files = [p / f for f in files if Path(f).suffix.lower() in valid_exts]
-            if img_files:
-                matching.extend(img_files)
-                matched_folder = str(p.relative_to(config.BASE_DIR) if config.BASE_DIR in p.parents else p.name)
+    for base_dir in search_roots:
+        if not base_dir.exists():
+            continue
 
-    matching.sort()
+        for root, dirs, files in os.walk(base_dir):
+            dirs[:] = [d for d in dirs if not d.startswith(".")]
+            p = Path(root)
+            name = p.name.lower()
+            parent = p.parent.name.lower()
+
+            category_match = any(t in name or t in parent for t in cat_tokens)
+            label_match = any(t in name or t in parent for t in lbl_tokens)
+
+            if category_match and label_match:
+                img_files = [
+                    p / f for f in files
+                    if (p / f).is_file() and (p / f).suffix.lower() in valid_exts
+                ]
+                if img_files:
+                    matching.extend(img_files)
+                    matched_folder = str(p.relative_to(config.BASE_DIR)) if config.BASE_DIR in p.parents else p.name
+
+    matching = sorted(set(matching))
     return {
         "found": len(matching) > 0,
         "images": matching,
         "folder": matched_folder,
-        "total": len(matching)
+        "total": len(matching),
     }
 
 
