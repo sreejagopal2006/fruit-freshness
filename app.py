@@ -1514,7 +1514,66 @@ def page_explorer():
     ds_info = load_dataset_summary()
 
     if not ds_info["exists"] or not ds_info["classes"]:
-        st.error(f"No dataset found at `{config.RAW_DATA_DIR}`. Please place class folders in `data/raw/`.")
+        st.info(
+            "The full training dataset is not bundled with this online deployment. "
+            "Showing genuine sample photographs included with the project instead."
+        )
+
+        sample_dir = config.BASE_DIR / "assets" / "fruitvision_samples"
+        valid_exts = tuple(config.SUPPORTED_EXTENSIONS)
+        samples = []
+
+        if sample_dir.exists():
+            for root, dirs, files in os.walk(sample_dir):
+                dirs[:] = [d for d in dirs if not d.startswith(".")]
+                for name in sorted(files):
+                    image_path = Path(root) / name
+                    if image_path.suffix.lower() in valid_exts:
+                        samples.append(image_path)
+
+        if not samples:
+            st.warning(
+                "No bundled sample images were found in "
+                "assets/fruitvision_samples/. The prediction page can still "
+                "be used independently."
+            )
+            return
+
+        st.markdown("### 🖼️ Genuine Sample Image Gallery")
+        st.caption(f"{len(samples)} bundled sample images available.")
+
+        folders = sorted({
+            str(image_path.parent.relative_to(sample_dir))
+            for image_path in samples
+        })
+        selected_folder = st.selectbox(
+            "Filter sample photographs by folder:",
+            ["All folders"] + folders
+        )
+
+        if selected_folder != "All folders":
+            samples = [
+                image_path for image_path in samples
+                if str(image_path.parent.relative_to(sample_dir)) == selected_folder
+            ]
+
+        gallery_cols = st.columns(4)
+        for idx, image_path in enumerate(samples[:24]):
+            with gallery_cols[idx % 4]:
+                try:
+                    with Image.open(image_path) as img:
+                        st.image(
+                            img.copy(),
+                            caption=str(image_path.relative_to(sample_dir)),
+                            use_container_width=True
+                        )
+                except Exception:
+                    continue
+
+        st.caption(
+            "These are bundled example photographs, not a count of the "
+            "complete training dataset."
+        )
         return
 
     col_stats, col_chart = st.columns([1, 2])
