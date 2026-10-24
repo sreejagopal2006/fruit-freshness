@@ -1299,25 +1299,21 @@ def page_predict():
                             unsafe_allow_html=True
                         )
 
-                    # Low Confidence Advisory Check
-                    if confidence < 0.35:
+                    # Confidence-aware freshness display
+                    if confidence < 0.50 or freshness_score is None:
                         st.warning(
-                            f"⚠️ **Low Confidence Advisory ({confidence * 100:.1f}%)**: "
-                            "The model has relatively low certainty for this input. "
-                            "This image may not be one of the supported fruits (Apple, Banana, Orange), "
-                            "or lighting, distance, or occlusion may be ambiguous."
+                            f"⚠️ **Uncertain prediction ({confidence * 100:.1f}% confidence).** "
+                            "Try another clear image with one supported fruit centered in the frame. "
+                            "This model result does not establish whether the fruit is safe to eat."
                         )
-
-                    # Freshness Gauge
-                    st.markdown("**Freshness Quality Index:**")
-                    bar_val = min(1.0, max(0.0, freshness_score / 100.0))
-                    st.progress(bar_val)
-
-                    # Edibility Alert
-                    if is_edible:
-                        st.success(f"✅ **Edible**: {recommendation}")
                     else:
-                        st.error(f"⛔ **Spoiled / Unsafe**: {recommendation}")
+                        st.markdown("**Estimated Freshness Quality Index:**")
+                        bar_val = min(1.0, max(0.0, freshness_score / 100.0))
+                        st.progress(bar_val)
+                        st.caption(
+                            "This is a model estimate, not a food-safety assessment."
+                        )
+                        st.info(f"**Model recommendation:** {recommendation}")
 
                     # Class Probabilities Breakdown
                     st.markdown("#### 📊 Supported Class Probabilities")

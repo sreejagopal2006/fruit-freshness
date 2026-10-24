@@ -105,6 +105,16 @@ class FruitFreshnessPredictor:
             predicted_class, confidence, visual_diag["blemish_ratio"]
         )
 
+        # Do not assign a definitive freshness grade to uncertain predictions.
+        if confidence < 0.50:
+            freshness_score = None
+            quality_grade = "Uncertain: Low Model Confidence"
+            is_edible = None
+            recommendation = (
+                "The model is uncertain. Try another clear image. "
+                "This prediction cannot determine whether the fruit is safe to eat."
+            )
+
         return {
             "predicted_class": predicted_class,
             "confidence": confidence,

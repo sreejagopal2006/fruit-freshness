@@ -256,9 +256,8 @@ def decide_from_probabilities(
     best_fruit = max(per_fruit, key=per_fruit.get) if per_fruit else None
 
     if (
-        supported_mass >= accept_mass
-        and supported_mass >= top_non_fruit_prob
-        and supported_mass >= other_fruit_mass
+        supported_mass >= 0.12
+        and supported_mass >= 1.5 * other_fruit_mass
     ):
         return ValidationResult(
             status=ACCEPTED, fruit=best_fruit, scores=scores, supported_fruits=supported
