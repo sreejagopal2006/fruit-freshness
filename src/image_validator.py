@@ -361,8 +361,17 @@ IMAGENET_WEIGHTS_FILE = "mobilenet_v2_weights_tf_dim_ordering_tf_kernels_1.0_224
 
 
 def default_imagenet_weights_path() -> Path:
-    keras_home = Path(os.environ.get("KERAS_HOME", Path.home() / ".keras"))
-    return keras_home / "models" / IMAGENET_WEIGHTS_FILE
+    """Locate bundled ImageNet weights first, then the standard Keras cache."""
+    project_root = Path(__file__).resolve().parent.parent
+    candidates = [
+        project_root / "assets" / "models" / IMAGENET_WEIGHTS_FILE,
+        Path(os.environ.get("KERAS_HOME", Path.home() / ".keras")) / "models" / IMAGENET_WEIGHTS_FILE,
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    # Return the bundled path so the error message points to the expected location.
+    return candidates[0]
 
 
 def load_imagenet_classifier(weights_path: Optional[os.PathLike] = None) -> Classifier:
