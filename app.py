@@ -1213,19 +1213,38 @@ def page_predict():
                 try:
                     t_start = time.perf_counter()
 
-                    # Validate the image before running freshness prediction.
-                    validator = get_image_validator()
-                    if validator is None:
-                        st.error("Image validation is unavailable. Please restart the app or check the validator setup.")
-                        st.stop()
+                    # Trust curated FruitVision gallery samples.
+                    # Validate uploaded and camera images before prediction.
+                    if "FruitVision" in image_source_name:
+                        prediction_image = selected_image
+                    else:
+                        validator = get_image_validator()
 
-                    validation = validator.validate(selected_image)
-                    if not validation.accepted:
-                        st.error(validation.user_message or "Unsupported image. Please upload a clear photo of an apple, banana, or orange.")
-                        st.info("Supported fruits: Apple, Banana, and Orange. Screenshots, drawings, and unrelated images are not accepted.")
-                        st.stop()
+                        if validator is None:
+                            st.error(
+                                "Image validation is unavailable. "
+                                "Please check the validator setup."
+                            )
+                            st.stop()
 
-                    result = predictor.predict(validation.image)
+                        validation = validator.validate(selected_image)
+
+                        if not validation.accepted:
+                            st.error(
+                                validation.user_message
+                                or "Unsupported image. Please upload a clear photo "
+                                   "of an apple, banana, or orange."
+                            )
+                            st.info(
+                                "Supported fruits: Apple, Banana, and Orange. "
+                                "Screenshots, drawings, and unrelated images "
+                                "are not accepted."
+                            )
+                            st.stop()
+
+                        prediction_image = validation.image
+
+                    result = predictor.predict(prediction_image)
                     processing_time_ms = round((time.perf_counter() - t_start) * 1000, 1)
 
                     pred_class = result["predicted_class"]
